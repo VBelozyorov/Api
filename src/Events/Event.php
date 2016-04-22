@@ -4,8 +4,9 @@ namespace TelegramBot\Api\Events;
 
 use TelegramBot\Api\Types\Message;
 use TelegramBot\Api\Types\Update;
+use TelegramBot\Api\Interfaces\EventInterface;
 
-class Event
+class Event implements EventInterface
 {
     /**
      * @var \Closure

@@ -7,12 +7,16 @@ use ReflectionFunction;
 use TelegramBot\Api\Botan;
 use TelegramBot\Api\Types\Update;
 
+use TelegramBot\Api\Interfaces\EventInterface;
+
+use TelegramBot\Api\InvalidArgumentException;
+
 class EventCollection
 {
     /**
      * Array of events.
      *
-     * @var array
+     * @var EventInterface[]
      */
     protected $events;
 
@@ -39,17 +43,23 @@ class EventCollection
     /**
      * Add new event to collection
      *
-     * @param Closure $event
+     * @param Closure|EventInterface $event
      * @param Closure|null $checker
      *
      * @return \TelegramBot\Api\Events\EventCollection
      */
-    public function add(Closure $event, $checker = null)
+    public function add($event, $checker = null)
     {
-        $this->events[] = !is_null($checker) ? new Event($event, $checker)
-            : new Event($event, function () {
-            });
-
+        if ($event instanceof EventInterface) {
+            $this->events[] = $event;
+        } elseif ($event instanceof Closure) {
+            $this->events[] = !is_null($checker) ? new Event($event, $checker) : new Event($event, function () {});
+        } else {
+            throw new InvalidArgumentException(
+                '$event for ' . __CLASS__ . " must be instanceof " . EventInterface::class ." or " . Closure::class
+            );
+        }
+        
         return $this;
     }
 
