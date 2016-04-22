@@ -6,6 +6,10 @@ use TelegramBot\Api\Client;
 use TelegramBot\Api\Events\EventCollection;
 use TelegramBot\Api\Types\Update;
 
+use TelegramBot\Api\Interfaces\EventInterface;
+
+include_once(__DIR__ . '/../../_fixtures/TestEventImplementation.php');
+
 class EventCollectionTest extends \PHPUnit_Framework_TestCase
 {
     public function data()
@@ -39,8 +43,20 @@ class EventCollectionTest extends \PHPUnit_Framework_TestCase
                         'text' => 'testText',
                     ],
                 ]),
-            ],
+            ]
         ];
+    }
+
+    protected $collection;
+
+    public function setUp()
+    {
+        $this->collection = new EventCollection();
+    }
+
+    public function tearDown()
+    {
+        $this->collection = null;
     }
 
     public function testConstructor1()
@@ -59,6 +75,21 @@ class EventCollectionTest extends \PHPUnit_Framework_TestCase
         $this->assertAttributeEmpty('events', $item);
     }
 
+    protected function eventsCheck() {
+
+        $reflection = new \ReflectionClass($this->collection);
+        $reflectionProperty = $reflection->getProperty('events');
+        $reflectionProperty->setAccessible(true);
+        $innerItem = $reflectionProperty->getValue($this->collection);
+        $reflectionProperty->setAccessible(false);
+
+        $this->assertAttributeInternalType('array', 'events', $this->collection);
+        /* @var \TelegramBot\Api\Events\Event $event */
+        foreach($innerItem as $event) {
+            $this->assertInstanceOf(EventInterface::class, $event);
+        }
+    }
+
     /**
      * @param \Closure $action
      * @param \Closure $checker
@@ -67,20 +98,8 @@ class EventCollectionTest extends \PHPUnit_Framework_TestCase
      */
     public function testAdd1($action, $checker)
     {
-        $item = new EventCollection();
-        $item->add($action, $checker);
-
-        $reflection = new \ReflectionClass($item);
-        $reflectionProperty = $reflection->getProperty('events');
-        $reflectionProperty->setAccessible(true);
-        $innerItem = $reflectionProperty->getValue($item);
-        $reflectionProperty->setAccessible(false);
-
-        $this->assertAttributeInternalType('array', 'events', $item);
-        /* @var \TelegramBot\Api\Events\Event $event */
-        foreach($innerItem as $event) {
-            $this->assertInstanceOf('\TelegramBot\Api\Events\Event', $event);
-        }
+        $this->collection->add($action, $checker);
+        $this->eventsCheck();
     }
 
     /**
@@ -90,20 +109,15 @@ class EventCollectionTest extends \PHPUnit_Framework_TestCase
      */
     public function testAdd2($action)
     {
-        $item = new EventCollection();
-        $item->add($action);
+        $this->collection->add($action);
+        $this->eventsCheck();
+    }
 
-        $reflection = new \ReflectionClass($item);
-        $reflectionProperty = $reflection->getProperty('events');
-        $reflectionProperty->setAccessible(true);
-        $innerItem = $reflectionProperty->getValue($item);
-        $reflectionProperty->setAccessible(false);
-
-        $this->assertAttributeInternalType('array', 'events', $item);
-        /* @var \TelegramBot\Api\Events\Event $event */
-        foreach($innerItem as $event) {
-            $this->assertInstanceOf('\TelegramBot\Api\Events\Event', $event);
-        }
+    public function testAdd3()
+    {
+        $event = new \TestEventImplementation();
+        $this->collection->add($event);
+        $this->eventsCheck();
     }
 
     /**
@@ -119,6 +133,7 @@ class EventCollectionTest extends \PHPUnit_Framework_TestCase
         $item->add($action, function ($update) use ($name) {
             return true;
         });
+        $item->add(new \TestEventImplementation());
 
         $mockedTracker = $this->getMockBuilder('\TelegramBot\Api\Botan')
             ->disableOriginalConstructor()

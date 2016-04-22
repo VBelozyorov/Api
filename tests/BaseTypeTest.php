@@ -7,7 +7,7 @@ class BaseTypeTest extends \PHPUnit_Framework_TestCase
 {
     public function setUp()
     {
-        include_once('tests/_fixtures/TestBaseType.php');
+        include_once('_fixtures/TestBaseType.php');
     }
 
     public function testRequiredParams()
