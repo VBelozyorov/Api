@@ -6,6 +6,7 @@ use Closure;
 use ReflectionFunction;
 use TelegramBot\Api\Events\EventCollection;
 use TelegramBot\Api\Types\Update;
+use TelegramBot\Api\Interfaces\EventInterface;
 
 /**
  * Class Client
@@ -63,13 +64,21 @@ class Client
      * Use this method to add an event.
      * If second closure will return true (or if you are passed null instead of closure), first one will be executed.
      *
-     * @param \Closure $event
+     * @param \Closure|EventInterface $event
      * @param \Closure|null $checker
      *
      * @return \TelegramBot\Api\Client
      */
-    public function on(Closure $event, Closure $checker = null)
+    public function on($event, Closure $checker = null)
     {
+        if (!$event instanceof EventInterface
+            && !$event instanceof Closure) {
+
+            throw new InvalidArgumentException(
+                '$event for ' . __CLASS__ . " must be instanceof " . EventInterface::class ." or " . Closure::class
+            );
+        }
+
         $this->events->add($event, $checker);
 
         return $this;
